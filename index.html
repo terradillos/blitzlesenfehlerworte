@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blitzlesen - Schreibtrainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --bg: #FBF3E4;
+            --dot: rgba(27, 31, 59, .09);
+            --card: #FFFFFF;
+            --ink: #1B1F3B;
+            --muted: #6B6F8A;
+            --line: #1B1F3B;
+            --shadow: #1B1F3B;
+            --coral: #FF6B57;
+            --sun: #FFC23C;
+            --teal: #17A398;
+            --violet: #6C5CE7;
+            --sky: #4CC9F0;
+            --ok-bg: #D9F5EF;
+            --ok-ink: #0B6B63;
+            --bad-bg: #FFE3E0;
+            --bad-ink: #B4232A;
+        }
+        .dark {
+            --bg: #12142B;
+            --dot: rgba(255, 255, 255, .06);
+            --card: #1D2045;
+            --ink: #F4F1FF;
+            --muted: #A3A7CC;
+            --line: #4A4F9E;
+            --shadow: #070816;
+            --ok-bg: #0F3B3A;
+            --ok-ink: #7CF0DF;
+            --bad-bg: #4A1F2A;
+            --bad-ink: #FF9AA0;
+        }
+
+        body {
+            font-family: 'Lexend', sans-serif;
+            background-color: var(--bg);
+            background-image: radial-gradient(var(--dot) 1.5px, transparent 1.5px);
+            background-size: 22px 22px;
+            color: var(--ink);
+        }
+        .muted { color: var(--muted); }
+        .flash-no-select { user-select: none; }
+
+        .card {
+            background: var(--card);
+            border: 2.5px solid var(--line);
+            border-radius: 22px;
+            box-shadow: 5px 5px 0 var(--shadow);
+        }
+        .btn {
+            background: var(--card);
+            color: var(--ink);
+            border: 2.5px solid var(--line);
+            border-radius: 14px;
+            font-weight: 700;
+            box-shadow: 3px 3px 0 var(--shadow);
+            transition: transform .08s, box-shadow .08s;
+            cursor: pointer;
+            padding: .6rem 1rem;
+        }
+        .btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--shadow); }
+        .btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--shadow); }
+        .btn-coral { background: var(--coral); color: #fff; }
+        .btn-sun { background: var(--sun); color: #1B1F3B; }
+        .btn-teal { background: var(--teal); color: #fff; }
+        .btn-violet { background: var(--violet); color: #fff; }
+        .btn-ghost { box-shadow: none; border-color: transparent; background: transparent; }
+        .btn-ghost:hover { box-shadow: none; transform: none; text-decoration: underline; }
+        .btn-ghost:active { transform: none; }
+
+        .icon-tile {
+            width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+            border: 2.5px solid var(--line);
+            box-shadow: 3px 3px 0 var(--shadow);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.15rem;
+        }
+        .chip {
+            border: 2.5px solid var(--line);
+            border-radius: 999px;
+            padding: .25rem .75rem;
+            font-weight: 800;
+            font-size: .8rem;
+            background: var(--sun);
+            color: #1B1F3B;
+        }
+        .hl { background: linear-gradient(transparent 62%, var(--sun) 62%); padding: 0 .15em; }
+        .dark .hl { background: linear-gradient(transparent 62%, rgba(255, 194, 60, .45) 62%); }
+
+        .field {
+            background: var(--bg);
+            color: var(--ink);
+            border: 2.5px solid var(--line);
+            border-radius: 14px;
+            padding: .7rem 1rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+        .field:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 4px rgba(108, 92, 231, .25); }
+        input[type=range] { accent-color: var(--coral); }
+
+        .switch { position: relative; width: 50px; height: 30px; display: inline-block; cursor: pointer; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch .track { position: absolute; inset: 0; background: var(--bg); border: 2.5px solid var(--line); border-radius: 999px; transition: .15s; }
+        .switch .track:before { content: ''; position: absolute; height: 16px; width: 16px; left: 4px; top: 4px; background: var(--ink); border-radius: 50%; transition: .15s; }
+        .switch input:checked + .track { background: var(--teal); }
+        .switch input:checked + .track:before { transform: translateX(20px); background: #fff; }
+
+        .fb-ok {
+            background: var(--ok-bg); color: var(--ok-ink);
+            border: 2.5px solid var(--teal); border-radius: 16px;
+            padding: .6rem 1rem; font-weight: 700; font-size: .9rem;
+        }
+        .fb-bad {
+            background: var(--bad-bg);
+            border: 2.5px solid var(--coral); border-radius: 18px;
+            padding: 1rem; text-align: left; width: 100%;
+        }
+        .fb-bad .title { color: var(--bad-ink); font-weight: 800; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .75rem; }
+        .wcard { border-radius: 14px; padding: .7rem .9rem; border: 2.5px solid; background: var(--card); }
+        .wcard .cap { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .25rem; }
+        .wcard .val { font-size: 1.6rem; font-weight: 800; line-height: 1.15; word-break: break-word; }
+        .wcard.wrong { border-color: var(--coral); }
+        .wcard.wrong .cap, .wcard.wrong .val { color: var(--bad-ink); }
+        .wcard.right { border-color: var(--teal); background: var(--ok-bg); }
+        .wcard.right .cap, .wcard.right .val { color: var(--ok-ink); }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.92); opacity: 0.9; }
+            50% { transform: scale(1.08); opacity: 0.5; }
+            100% { transform: scale(0.92); opacity: 0.9; }
+        }
+        .fixation-pulse { animation: pulse-ring 1.2s infinite ease-in-out; }
+        @keyframes pop { 0% { transform: scale(.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .pop { animation: pop .18s ease-out; }
+    </style>
+</head>
+<body class="min-h-screen transition-colors duration-200">
+
+    <div class="max-w-4xl mx-auto px-4 py-6 flex flex-col min-h-screen">
+
+        <!-- Header -->
+        <header class="card flex justify-between items-center mb-6 p-4">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="app.showDashboard()">
+                <div class="icon-tile" style="background: var(--sun); color: #1B1F3B;">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl leading-none"><span class="hl">Blitzlesen</span></h1>
+                    <p class="text-xs muted font-medium mt-1">Schreibtrainer (Schweiz)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="chip"><i class="fa-solid fa-star mr-1"></i><span id="header-stars">0</span></div>
+                <button onclick="app.toggleDarkMode()" class="btn" style="padding:.5rem .7rem" aria-label="Dunkelmodus">
+                    <i id="dark-mode-icon" class="fa-solid fa-moon"></i>
+                </button>
+                <button onclick="app.showSettingsModal()" class="btn" style="padding:.5rem .7rem" aria-label="Einstellungen">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-grow flex flex-col justify-center">
+
+            <!-- DASHBOARD -->
+            <div id="view-dashboard" class="space-y-6">
+                <div class="card p-6 relative overflow-hidden" style="background: var(--violet); color: #fff;">
+                    <div class="relative z-10 max-w-2xl">
+                        <span class="chip mb-3 inline-block">Ansehen • merken • schreiben</span>
+                        <h2 class="text-2xl font-extrabold mb-2">Wort blitzen, merken, schreiben</h2>
+                        <p class="text-sm leading-relaxed" style="color: rgba(255,255,255,.88);">Ein Wort erscheint nur kurz. Danach tippst du es genau so ein, wie du es gesehen hast. Richtig: das Tempo steigt. Falsch: es sinkt, und das Wort kommt später nochmals.</p>
+                    </div>
+                    <div class="absolute -right-8 -top-8 w-36 h-36 rounded-full pointer-events-none" style="background: var(--sun); opacity:.95;"></div>
+                    <div class="absolute right-14 -bottom-10 w-24 h-24 rounded-full pointer-events-none" style="background: var(--coral);"></div>
+                    <i class="fa-solid fa-bolt absolute right-8 top-6 text-5xl pointer-events-none" style="color:#1B1F3B"></i>
+                </div>
+
+                <div id="resume-training-panel" class="hidden card p-4 flex items-center justify-between gap-3" style="background: var(--ok-bg);">
+                    <div>
+                        <div class="font-extrabold" style="color: var(--ok-ink)">Training pausiert</div>
+                        <div class="text-sm muted">Du kannst genau dort weitermachen, wo du aufgehört hast.</div>
+                    </div>
+                    <button onclick="app.resumeTraining()" class="btn btn-teal shrink-0 text-sm">Weitermachen</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="stages-container"></div>
+            </div>
+
+            <!-- GAME -->
+            <div id="view-game" class="hidden flex flex-col items-center justify-center space-y-6 my-auto py-4">
+
+                <div class="card w-full max-w-xl flex items-center justify-between p-4">
+                    <button onclick="app.pauseTraining()" class="btn btn-ghost text-sm" style="padding:.3rem .5rem">
+                        <i class="fa-solid fa-pause mr-1"></i> Pause
+                    </button>
+                    <div class="text-center">
+                        <div id="game-stage-title" class="font-extrabold text-sm"></div>
+                        <div id="game-speed-tag" class="text-xs font-bold" style="color: var(--coral)"></div>
+                    </div>
+                    <div class="flex items-center gap-2 font-bold text-sm">
+                        <i class="fa-solid fa-bullseye" style="color: var(--violet)"></i>
+                        <span id="game-progress"></span>
+                    </div>
+                </div>
+
+                <div class="card w-full max-w-xl p-8 text-center min-h-[280px] flex flex-col items-center justify-center">
+
+                    <div id="state-fixation" class="flex flex-col items-center justify-center space-y-3">
+                        <div class="w-14 h-14 rounded-full flex items-center justify-center fixation-pulse" style="border: 3px solid var(--coral);">
+                            <i class="fa-solid fa-plus text-2xl" style="color: var(--coral)"></i>
+                        </div>
+                        <p class="text-xs muted font-semibold">Blicke auf das Kreuz...</p>
+                    </div>
+
+                    <div id="state-word" class="hidden my-auto w-full">
+                        <span id="flash-word-text" class="flash-no-select font-extrabold tracking-wide inline-block leading-tight break-words max-w-full"></span>
+                    </div>
+
+                    <div id="state-answer" class="hidden w-full flex flex-col items-center gap-4 max-w-sm pop">
+                        <p class="text-sm font-bold muted">Schreibe das Wort, das du gesehen hast:</p>
+                        <div class="flex w-full gap-2">
+                            <input type="text" id="manual-word-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Wort eintippen..." class="field flex-grow min-w-0">
+                            <button onclick="app.submitInput()" class="btn btn-violet text-sm">Prüfen</button>
+                        </div>
+                    </div>
+
+                    <div id="game-feedback" class="hidden w-full mt-5 text-center pop">
+                        <div id="feedback-badge" class="inline-block max-w-full"></div>
+                    </div>
+                </div>
+
+                <button id="btn-next-word" onclick="app.nextTurn()" class="btn btn-coral hidden text-base" style="padding:.8rem 1.8rem">
+                    <span class="inline-flex items-center gap-2">Nächstes Wort [Enter] <i class="fa-solid fa-arrow-right"></i></span>
+                </button>
+            </div>
+
+            <!-- RESULT -->
+            <div id="view-result" class="hidden card max-w-md mx-auto w-full p-8 text-center space-y-6">
+                <div class="icon-tile mx-auto" style="width:84px;height:84px;border-radius:50%;background: var(--sun); color:#1B1F3B; font-size:2rem;">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-extrabold">Übung beendet!</h2>
+                    <p id="result-subtitle" class="text-sm muted mt-1"></p>
+                </div>
+                <div class="grid grid-cols-2 gap-y-2 text-left text-sm p-4" style="background: var(--bg); border: 2.5px dashed var(--line); border-radius: 16px;">
+                    <div class="muted">Erstversuch richtig:</div>
+                    <div id="result-score" class="font-extrabold text-right" style="color: var(--ok-ink)"></div>
+                    <div class="muted">End-Tempo:</div>
+                    <div id="result-speed" class="font-extrabold text-right" style="color: var(--violet)"></div>
+                    <div class="muted">Trainingsdauer:</div>
+                    <div id="result-duration" class="font-extrabold text-right"></div>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <button onclick="app.continueReading()" class="btn btn-teal w-full text-sm"><i class="fa-solid fa-play mr-2"></i>Weitermachen (10 weitere Wörter)</button>
+                    <button onclick="app.showDashboard()" class="btn btn-violet w-full text-sm">Zur Übersicht</button>
+                    <button onclick="app.restartCurrentLevel()" class="btn btn-ghost text-xs muted">Gruppe nochmals von vorne starten</button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-8 text-center text-xs muted">
+            Blitzlesen Schreibtrainer (Schweiz – 'ss' statt 'ß') • Adaptives Tempo • Enter = Prüfen / Weiter
+        </footer>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" style="background: rgba(27,31,59,.55);">
+        <div class="card max-w-md w-full p-6 space-y-5">
+            <div class="flex justify-between items-center pb-3" style="border-bottom: 2.5px dashed var(--line)">
+                <h3 class="font-extrabold text-lg flex items-center gap-2"><i class="fa-solid fa-sliders" style="color: var(--coral)"></i> Einstellungen</h3>
+                <button onclick="app.hideSettingsModal()" class="muted hover:opacity-70"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="space-y-5">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <div class="font-bold text-sm">Gross-/Kleinschreibung prüfen</div>
+                        <div class="text-xs muted">Aus: «haus» gilt auch als richtig</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="setting-case" checked onchange="app.updateSettings()">
+                        <span class="track"></span>
+                    </label>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm font-bold mb-2">
+                        <span>Schriftgrösse Wortblitz</span>
+                        <span id="setting-fontsize-val" class="chip" style="padding:.1rem .6rem">48px</span>
+                    </div>
+                    <input type="range" id="setting-fontsize" min="32" max="72" value="48" class="w-full cursor-pointer" oninput="app.updateSettings()">
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm font-bold mb-2">
+                        <span>Fixationsdauer (Vorbereitung)</span>
+                        <span id="setting-fixation-val" class="chip" style="padding:.1rem .6rem">1000 ms</span>
+                    </div>
+                    <input type="range" id="setting-fixation" min="500" max="2000" step="100" value="1000" class="w-full cursor-pointer" oninput="app.updateSettings()">
+                </div>
+            </div>
+            <button onclick="app.hideSettingsModal()" class="btn btn-sun w-full text-sm">Schliessen</button>
+        </div>
+    </div>
+
+    <script>
+        const WORD_GROUPS = {
+            group1: [
+                "ab","all","alt","am","an","aus","bei","bis","bloss","brennt",
+                "Chef","das","dass","dem","den","denn","der","des","die","dort",
+                "drei","du","durch","eben","ein","eins","er","erst","es","Fall",
+                "fast","Frau","früh","für","ganz","gar","gelb","Geld","gross","Grund",
+                "gut","Hand","Haus","Herr","hier","ich","im","in","ins","ist",
+                "ja","Jahr","jung","kann","Kind","klein","kommt","kurz","Land","lang",
+                "lässt","Lärm","leicht","macht","man","Mann","Mark","mehr","mein","meiste",
+                "Mensch","mit","muss","nach","nicht","noch","nun","nur","oft","ohne",
+                "recht","sass","Schiff","schiebt","schon","schön","schwimmt","sehr","sei","seit",
+                "sich","sind","so","soll","Spass","spät","stark","Teil","um","und",
+                "vom","von","vor","war","was","weiss","weit","Welt","wenn","wer",
+                "wie","will","wo","wohl","Wort","wählt","Zeit","zu","zum","zur"
+            ],
+            group2: [
+                "als wie","am meisten","des Weiteren","du weisst","fast immer","heute Morgen",
+                "im Allgemeinen","im Einzelnen","im Folgenden","im Wesentlichen","im Übrigen",
+                "unter anderem","von St. Ange","zu Hause","zum anderen","zum einen"
+            ],
+            group3: [
+                "Adresse","aktiv","allein","anscheinend","ausserdem","Ballett","Befehl","befehlen","befreien","Beispiel",
+                "betreten","bevor","Bezug","beziehen","bezüglich","bisschen","brillant","Business","Chauffeur","dann",
+                "Daten","desto","dieses","Ehrgeiz","eigentlich","einzeln","einzig","empfehlen","Empfänger","Ende",
+                "entzündet","erraten","erreichen","errichtet","erschrak","fahren","Fahrrad","Fassade","Fehler","fehlerhaft",
+                "Frieden","Fähigkeit","Galerie","gecrasht","gefallen","genügend","gerade","Gerät","gesamt","gesund",
+                "Gewissen","giesst","haben","heute","Hobbys","Hygiene","immer","immerhin","infolge","kennen",
+                "Kenntnis","Kolonne","kommen","können","kräftig","lassen","Leben","machen","manchmal","Manieren",
+                "Massnahme","meistens","Messer","messen","Mittelpunkt","Müdigkeit","nämlich","nerven","nervös","Notizen",
+                "nötig","persönlich","plötzlich","Problem","Projekt","rasieren","rennen","Ressourcen","Rhythmus","Rückgrat",
+                "schliesslich","schrecklich","schwierig","sicher","sicherlich","Silvester","sowie","spazieren","Stadt","stattfinden",
+                "Stelle","Strasse","Styling","Teller","Themen","Therapie","unter","übrigens","vielleicht","voraus",
+                "während","wahr","wahrnehmen","wichtig","wieder","wiedergeben","wissen","Woche","zuerst","zuletzt",
+                "zurzeit","zuwider"
+            ],
+            group4: [
+                "aggressiv","Aktion","Aktivität","alphabetisch","Analyse","Anerkennung","Apparat","Appetit","aufrechterhalten","aufwendig",
+                "beeindruckend","beherrschen","beziehungsweise","detailliert","differenzieren","Dilemma","Diskussion","Disziplin","downloaden","Existenz",
+                "existenziell","finanziell","gefährlich","Gelegenheit","generell","gewissenhaft","Grammatik","herausfinden","hinuntergehen","illegal",
+                "intelligent","Interesse","interessant","interessiert","Jahrhundert","Karussell","Katastrophe","Kehrtwende","kennenlernen","Klimaanlage",
+                "Kommentar","Konkurrenz","Konsequenz","korrigieren","Kreativität","kreativ","Kriterien","Material","Medizin","Möglichkeit",
+                "Notwendigkeit","offiziell","originell","parallel","Reflexion","relevant","Reparatur","Restaurant","riskieren","Satellit",
+                "Strategie","Symmetrie","tatsächlich","Toleranz","verhältnismässig","verwandtschaftlich","voraussehen","voraussichtlich","widerlegen","widerspiegeln",
+                "Widerspruch"
+            ]
+        };
+
+        const STAGE_CONFIGS = [
+            { id: 1, title: "Gruppe 1: Einsilbige Wörter", desc: "Häufige 1-silbige Wörter", key: "group1", icon: "fa-seedling", accent: "teal", fg: "#fff" },
+            { id: 2, title: "Gruppe 2: Verbindungen", desc: "Wortgruppen aus 1- und 2-silbigen Wörtern", key: "group2", icon: "fa-link", accent: "sky", fg: "#1B1F3B" },
+            { id: 3, title: "Gruppe 3: Zweisilbige Wörter", desc: "Wörter mit 2 Silben", key: "group3", icon: "fa-layer-group", accent: "sun", fg: "#1B1F3B" },
+            { id: 4, title: "Gruppe 4: Dreisilber und länger", desc: "Lange Wörter und Fremdwörter", key: "group4", icon: "fa-graduation-cap", accent: "coral", fg: "#fff" }
+        ];
+
+        const SESSION_SIZE = 10;
+        const MAX_SPEED = 10000;
+        const STORAGE_KEY = 'blitzlesen_schreiben_v1';
+        const START_SPEEDS = [
+            { ms: 1500, label: 'Start' },
+            { ms: 800, label: 'Zügig' },
+            { ms: 200, label: 'Profi' },
+            { ms: 100, label: 'Experte' },
+            { ms: 50, label: 'Blitz' }
+        ];
+
+        class BlitzLesenApp {
+            constructor() {
+                this.settings = { caseSensitive: true, fontSize: 48, fixationDelay: 1000 };
+                this.userProgress = this.loadProgress();
+                this.currentStage = null;
+                this.currentSpeed = 1500;
+                this.startTime = null;
+                this.currentQueue = [];
+                this.currentWord = null;
+                this.firstTrySuccessCount = 0;
+                this.firstAttemptCount = 0;
+                this.seenWords = new Set();
+                this.consecutiveWrongCount = 0;
+                this.answerLocked = false;
+                this.isAwaitingNext = false;
+                this.isPaused = false;
+                this.pausedPhase = null;
+                this.flashTimer = null;
+                this.fixationTimer = null;
+                this.initKeyboardListeners();
+            }
+
+            init() {
+                this.renderDashboard();
+                this.updateHeaderStars();
+            }
+
+            loadProgress() {
+                const defaults = { stars: 0, speeds: {} };
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        if (data && typeof data === 'object') {
+                            return {
+                                stars: typeof data.stars === 'number' ? data.stars : 0,
+                                speeds: data.speeds && typeof data.speeds === 'object' ? data.speeds : {}
+                            };
+                        }
+                    }
+                } catch (e) {}
+                return defaults;
+            }
+
+            saveProgress() {
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.userProgress)); } catch (e) {}
+                this.updateHeaderStars();
+            }
+
+            updateHeaderStars() {
+                document.getElementById('header-stars').innerText = this.userProgress.stars || 0;
+            }
+
+            toggleDarkMode() {
+                document.documentElement.classList.toggle('dark');
+                const isDark = document.documentElement.classList.contains('dark');
+                document.getElementById('dark-mode-icon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            }
+
+            initKeyboardListeners() {
+                window.addEventListener('keydown', (e) => {
+                    if (document.getElementById('view-game').classList.contains('hidden')) return;
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+
+                    const inputFocused = document.activeElement && document.activeElement.id === 'manual-word-input';
+                    if (inputFocused) {
+                        if (e.key === 'Enter') { e.preventDefault(); this.submitInput(); }
+                        return;
+                    }
+                    if (this.isAwaitingNext) {
+                        e.preventDefault();
+                        this.nextTurn();
+                    }
+                });
+            }
+
+            renderDashboard() {
+                const container = document.getElementById('stages-container');
+                container.innerHTML = '';
+                STAGE_CONFIGS.forEach(stage => {
+                    const savedSpeed = this.userProgress.speeds[stage.id];
+                    const count = WORD_GROUPS[stage.key].length;
+                    const speedBadge = savedSpeed
+                        ? `<span class="chip"><i class="fa-solid fa-gauge-high mr-1"></i>${savedSpeed} ms</span>`
+                        : `<span class="text-xs muted italic">Noch kein Tempo gespeichert</span>`;
+                    const savedBtn = savedSpeed
+                        ? `<button onclick="app.startLevel(${stage.id}, ${savedSpeed})" class="btn btn-sun w-full text-xs">
+                              <i class="fa-solid fa-bolt mr-1"></i> Mit gespeichertem Tempo starten (${savedSpeed} ms)
+                           </button>` : '';
+                    const speedButtons = START_SPEEDS.map(s =>
+                        `<button onclick="app.startLevel(${stage.id}, ${s.ms})" class="btn text-xs text-center" style="padding:.5rem .25rem">${s.ms} ms<span class="block text-[10px] font-medium muted">${s.label}</span></button>`
+                    ).join('');
+
+                    const card = document.createElement('div');
+                    card.className = "card p-5 flex flex-col justify-between gap-4";
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <div class="icon-tile" style="background: var(--${stage.accent}); color: ${stage.fg};">
+                                    <i class="fa-solid ${stage.icon}"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-extrabold text-base leading-tight">${stage.title}</h3>
+                                    <p class="text-xs muted">${stage.desc} (${count})</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between mt-4 pt-3" style="border-top: 2.5px dashed var(--line)">
+                                <span class="text-xs font-bold muted">Dein Tempo:</span>
+                                ${speedBadge}
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="text-[11px] font-extrabold uppercase tracking-wider muted">Startwert wählen</div>
+                            ${savedBtn}
+                            <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">${speedButtons}</div>
+                        </div>`;
+                    container.appendChild(card);
+                });
+            }
+
+            drawBatch(n) {
+                const list = WORD_GROUPS[this.currentStage.key];
+                const pool = [...list].sort(() => Math.random() - 0.5);
+                const out = [];
+                while (out.length < n) {
+                    out.push(...pool.slice(0, n - out.length));
+                    if (pool.length >= n) break;
+                }
+                return out.slice(0, n);
+            }
+
+            startLevel(stageId, startSpeedMs) {
+                this.currentStage = STAGE_CONFIGS.find(s => s.id === stageId);
+                if (!this.currentStage) return;
+                this.clearTimers();
+                this.currentSpeed = Math.min(MAX_SPEED, startSpeedMs);
+                this.startTime = Date.now();
+                this.isPaused = false;
+                this.pausedPhase = null;
+                document.getElementById('resume-training-panel').classList.add('hidden');
+
+                this.currentQueue = this.drawBatch(SESSION_SIZE);
+                this.firstTrySuccessCount = 0;
+                this.firstAttemptCount = 0;
+                this.seenWords = new Set();
+                this.consecutiveWrongCount = 0;
+
+                document.getElementById('game-stage-title').innerText = this.currentStage.title;
+                this.updateSpeedTagUI();
+                this.showView('game');
+                this.nextTurn();
+            }
+
+            clearTimers() {
+                clearTimeout(this.flashTimer);
+                clearTimeout(this.fixationTimer);
+            }
+
+            updateSpeedTagUI() {
+                document.getElementById('game-speed-tag').innerText = `Anzeigedauer: ${Math.round(this.currentSpeed)} ms`;
+            }
+
+            nextTurn() {
+                this.isAwaitingNext = false;
+                this.answerLocked = false;
+
+                if (this.currentQueue.length === 0) {
+                    this.finishLevel();
+                    return;
+                }
+
+                this.currentWord = this.currentQueue.shift();
+                document.getElementById('game-progress').innerText = `${this.currentQueue.length + 1} im Stapel`;
+                document.getElementById('btn-next-word').classList.add('hidden');
+                this.hideFeedback();
+                this.setCanvasState('fixation');
+                this.fixationTimer = setTimeout(() => this.flashWord(), this.settings.fixationDelay);
+            }
+
+            flashWord() {
+                this.setCanvasState('word');
+                const el = document.getElementById('flash-word-text');
+                el.style.fontSize = `${this.settings.fontSize}px`;
+                el.textContent = this.currentWord;
+                this.flashTimer = setTimeout(() => this.showAnswer(), this.currentSpeed);
+            }
+
+            showAnswer() {
+                this.setCanvasState('answer');
+                const input = document.getElementById('manual-word-input');
+                input.value = '';
+                input.focus();
+            }
+
+            setCanvasState(state) {
+                ['fixation', 'word', 'answer'].forEach(s => {
+                    document.getElementById(`state-${s}`).classList.toggle('hidden', s !== state);
+                });
+            }
+
+            normalize(value) {
+                let v = value.normalize('NFC').trim().replace(/\s+/g, ' ');
+                if (!this.settings.caseSensitive) v = v.toLocaleLowerCase('de-CH');
+                return v;
+            }
+
+            submitInput() {
+                if (!this.currentWord || this.answerLocked) return;
+                if (document.getElementById('state-answer').classList.contains('hidden')) return;
+                const raw = document.getElementById('manual-word-input').value;
+                const correct = this.normalize(raw) === this.normalize(this.currentWord);
+                this.evaluateAnswer(correct, raw.trim());
+            }
+
+            evaluateAnswer(isCorrect, typed) {
+                if (this.answerLocked || !this.currentWord) return;
+                this.answerLocked = true;
+                document.getElementById('manual-word-input').blur();
+
+                if (!this.seenWords.has(this.currentWord)) {
+                    this.seenWords.add(this.currentWord);
+                    this.firstAttemptCount++;
+                    if (isCorrect) this.firstTrySuccessCount++;
+                }
+
+                if (isCorrect) {
+                    this.consecutiveWrongCount = 0;
+                    this.currentSpeed = Math.min(MAX_SPEED, Math.max(20, Math.round(this.currentSpeed * 0.90)));
+                    this.showFeedback(`Richtig: ${this.currentWord}. Tempo 10 % schneller.`, "fb-ok");
+                } else {
+                    this.consecutiveWrongCount++;
+                    const factors = [1.10, 1.30, 1.60, 2.00];
+                    const labels = ['10 % langsamer', '30 % langsamer', '60 % langsamer', '100 % langsamer'];
+                    const i = Math.min(this.consecutiveWrongCount, 4) - 1;
+                    this.currentSpeed = Math.min(MAX_SPEED, Math.round(this.currentSpeed * factors[i]));
+                    this.showErrorFeedback(typed, this.currentWord, labels[i]);
+                    // Fehlerwort kommt bald und nochmals am Ende
+                    this.currentQueue.splice(Math.min(1, this.currentQueue.length), 0, this.currentWord);
+                    this.currentQueue.push(this.currentWord);
+                }
+
+                this.updateSpeedTagUI();
+                this.isAwaitingNext = true;
+                document.getElementById('state-answer').classList.add('hidden');
+                document.getElementById('btn-next-word').classList.remove('hidden');
+            }
+
+            showFeedback(text, cls) {
+                const badge = document.getElementById('feedback-badge');
+                badge.className = cls;
+                badge.textContent = text;
+                document.getElementById('game-feedback').classList.remove('hidden');
+            }
+
+            showErrorFeedback(typed, correct, slowdown) {
+                const badge = document.getElementById('feedback-badge');
+                badge.className = 'fb-bad';
+                badge.replaceChildren();
+
+                const title = document.createElement('div');
+                title.className = 'title';
+                title.textContent = `Nicht ganz – ${slowdown}`;
+                badge.appendChild(title);
+
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3';
+                const card = (label, value, ok) => {
+                    const c = document.createElement('div');
+                    c.className = `wcard ${ok ? 'right' : 'wrong'}`;
+                    const cap = document.createElement('div');
+                    cap.className = 'cap';
+                    cap.textContent = label;
+                    const w = document.createElement('div');
+                    w.className = 'val';
+                    w.textContent = value || '— keine Eingabe —';
+                    c.append(cap, w);
+                    return c;
+                };
+                grid.append(card('Deine Eingabe', typed, false), card('So ist es richtig', correct, true));
+                badge.appendChild(grid);
+
+                const hint = document.createElement('div');
+                hint.className = 'mt-3 text-xs font-semibold muted';
+                hint.textContent = `Merke dir die grüne Schreibweise. Fehler in Folge: ${this.consecutiveWrongCount}.`;
+                badge.appendChild(hint);
+                document.getElementById('game-feedback').classList.remove('hidden');
+            }
+
+            hideFeedback() {
+                document.getElementById('game-feedback').classList.add('hidden');
+            }
+
+            finishLevel() {
+                const durationSec = Math.floor((Date.now() - (this.startTime || Date.now())) / 1000);
+                const mins = Math.floor(durationSec / 60);
+                const secs = durationSec % 60;
+
+                this.userProgress.speeds[this.currentStage.id] = this.currentSpeed;
+                const accuracy = this.firstAttemptCount ? Math.round((this.firstTrySuccessCount / this.firstAttemptCount) * 100) : 0;
+                if (this.firstAttemptCount >= 10 && accuracy >= 80) this.userProgress.stars = (this.userProgress.stars || 0) + 1;
+                this.saveProgress();
+
+                document.getElementById('result-subtitle').innerText = accuracy >= 80
+                    ? 'Starke Runde! Weitermachen oder zur Übersicht?'
+                    : 'Gut geübt! Weitermachen oder zur Übersicht?';
+                document.getElementById('result-score').innerText = `${this.firstTrySuccessCount} / ${this.firstAttemptCount} (${accuracy} %)`;
+                document.getElementById('result-speed').innerText = `${this.currentSpeed} ms`;
+                document.getElementById('result-duration').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs} Min`;
+                this.showView('result');
+            }
+
+            continueReading() {
+                this.currentQueue.push(...this.drawBatch(SESSION_SIZE));
+                this.showView('game');
+                this.nextTurn();
+            }
+
+            pauseTraining() {
+                if (!this.currentStage || this.isPaused) return;
+                this.clearTimers();
+                const visible = id => !document.getElementById(id).classList.contains('hidden');
+                this.pausedPhase = this.isAwaitingNext ? 'next'
+                    : visible('state-fixation') ? 'fixation'
+                    : visible('state-word') ? 'word'
+                    : 'answer';
+                this.isPaused = true;
+                document.getElementById('resume-training-panel').classList.remove('hidden');
+                this.showView('dashboard');
+            }
+
+            resumeTraining() {
+                if (!this.isPaused || !this.currentStage) return;
+                this.isPaused = false;
+                document.getElementById('resume-training-panel').classList.add('hidden');
+                this.showView('game');
+                if (this.pausedPhase === 'fixation') {
+                    this.setCanvasState('fixation');
+                    this.fixationTimer = setTimeout(() => this.flashWord(), this.settings.fixationDelay);
+                } else if (this.pausedPhase === 'word' || this.pausedPhase === 'answer') {
+                    this.showAnswer();
+                } else if (this.pausedPhase === 'next') {
+                    document.getElementById('btn-next-word').classList.remove('hidden');
+                }
+                this.pausedPhase = null;
+            }
+
+            restartCurrentLevel() {
+                if (this.currentStage) this.startLevel(this.currentStage.id, this.currentSpeed);
+            }
+
+            showView(name) {
+                ['dashboard', 'game', 'result'].forEach(v => {
+                    document.getElementById(`view-${v}`).classList.toggle('hidden', v !== name);
+                });
+                if (name === 'dashboard') this.renderDashboard();
+            }
+
+            showDashboard() {
+                this.clearTimers();
+                const gameVisible = !document.getElementById('view-game').classList.contains('hidden');
+                if (this.currentStage && !this.isPaused && gameVisible) {
+                    this.pauseTraining();
+                    return;
+                }
+                this.showView('dashboard');
+            }
+
+            showSettingsModal() { document.getElementById('settings-modal').classList.remove('hidden'); }
+            hideSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+
+            updateSettings() {
+                this.settings.caseSensitive = document.getElementById('setting-case').checked;
+                this.settings.fontSize = parseInt(document.getElementById('setting-fontsize').value);
+                this.settings.fixationDelay = parseInt(document.getElementById('setting-fixation').value);
+                document.getElementById('setting-fontsize-val').innerText = `${this.settings.fontSize}px`;
+                document.getElementById('setting-fixation-val').innerText = `${this.settings.fixationDelay} ms`;
+            }
+        }
+
+        let app;
+        window.onload = () => {
+            app = new BlitzLesenApp();
+            app.init();
+        };
+    </script>
+</body>
+</html>
